@@ -5,7 +5,7 @@ def buscar_producto_openfoodfacts(nombre):
     """Buscar producto en Open Food Facts"""
     try:
         print(f"🔍 Buscando en API: {nombre}")
-        # URL CORREGIDA: openfoodfacts.org (sin 's')
+        
         url = "https://world.openfoodfacts.org/cgi/search.pl"
         params = {
             'search_terms': nombre,
