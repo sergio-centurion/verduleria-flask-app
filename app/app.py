@@ -584,7 +584,7 @@ def rechazar_cambio_stock(cambio_id):
     conn.close()
     return redirect(url_for("panel_dueno"))
 
-#  ESTA FUE LA RUTA QUE FALTABA Y DABA ERROR 500 
+
 @app.route("/solicitudes_pendientes")
 @login_required
 @rol_requerido("dueno")
