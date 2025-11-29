@@ -1,0 +1,107 @@
+
+<!-- EDITAR PRODUCTO: templates/editar_producto.html -->
+{% extends 'base.html' %}
+{% block title %}Editar Producto{% endblock %}
+
+{% block content %}
+<h2>Editar Producto</h2>
+
+<div class="form-container">
+  <form method="POST" class="product-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="form-group">
+      <label for="nombre">Nombre del Producto *</label>
+      <input type="text" id="nombre" name="nombre" required value="{{ producto.nombre }}">
+    </div>
+
+    <div class="form-group">
+      <label for="descripcion">Descripción</label>
+      <textarea id="descripcion" name="descripcion" rows="3">{{ producto.descripcion or '' }}</textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="precio">Precio Unitario ($) *</label>
+        <input type="number" id="precio" name="precio" step="0.01" min="0" required value="{{ producto.precio }}">
+      </div>
+
+      <div class="form-group">
+        <label for="stock">Stock *</label>
+        <input type="number" id="stock" name="stock" min="0" required value="{{ producto.stock }}">
+      </div>
+
+      <div class="form-group">
+        <label for="categoria">Categoría</label>
+        <input type="text" id="categoria" name="categoria" value="{{ producto.categoria or '' }}">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-success">✓ Guardar Cambios</button>
+      <a href="{{ url_for('vendedor_view') }}" class="btn btn-primary">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+<style>
+.form-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-start;
+}
+
+.form-actions .btn {
+  flex: 1;
+  max-width: 250px;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - Verdulería Fres{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-header">
+        <h1>🍎 Verdulería Fres</h1>
+        <p class="subtitle">Productos frescos directamente a tu mesa</p>
+    </div>
+    
+    <div class="login-card">
+        <h2>Bienvenido</h2>
+        <p class="login-instruction">Ingresa a tu cuenta</p>
+        
+        <form method="POST" action="{{ url_for('login') }}" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div class="form-group">
+                <label for="username">👤 Usuario</label>
+                <input type="text" id="username" name="username" placeholder="Ingresa tu usuario" required
+                       autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">🔒 Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required
+                       autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login">🚀 Iniciar Sesión</button>
+        </form>
+
+        <!-- SOLO mostrar credenciales en desarrollo -->
+        {% if is_development() %}
+        <div class="dev-credentials">
+            <details class="dev-details">
+                <summary>🔧 Credenciales de Desarrollo (SOLO LOCAL)</summary>
+                <div class="credentials-list">
+                    <p><small>⚠️ Estas credenciales solo funcionan en servidor local</small></p>
+                    <ul>
+                        <li><strong>Dueño:</strong> admin / admin</li>
+                        <li><strong>Vendedor:</strong> vendedor / vendedor</li>
+                        <li><strong>Cliente:</strong> cliente / cliente</li>
+                    </ul>
+                </div>
+            </details>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.login-header h1 {
+    color: #2e7d32;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.login-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.login-instruction {
+    text-align: center;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #4caf50;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, #4caf50, #45a049);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+/* Estilos para credenciales de desarrollo */
+.dev-credentials {
+    margin-top: 2rem;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 1rem;
+}
+
+.dev-details {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.dev-details summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #856404;
+    padding: 0.5rem;
+}
+
+.dev-details[open] summary {
+    border-bottom: 1px solid #ffeaa7;
+    margin-bottom: 0.5rem;
+}
+
+.credentials-list {
+    padding: 0 0.5rem;
+}
+
+.credentials-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0;
+}
+
+.credentials-list li {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #ffeaa7;
+}
+
+.credentials-list li:last-child {
+    border-bottom: none;
+}
+
+.credentials-list small {
+    color: #666;
+    font-style: italic;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Finalizar Compra{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="checkout-grid">
+        
+        <div class="payment-section">
+            <h2 class="section-title">💳 Método de Pago</h2>
+            
+            <form action="{{ url_for('procesar_pago') }}" method="POST" id="payment-form" class="payment-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="tipo_tarjeta" id="tipo_tarjeta" value="generica">
+
+                <div class="card-selector">
+                    <div class="option-group">
+                        <input type="radio" id="pay_card" name="metodo_pago" value="tarjeta" checked>
+                        <label for="pay_card" class="radio-label">
+                            <span>Tarjeta de Crédito / Débito</span>
+                            <div class="card-icons">
+                                <img src="{{ url_for('static', filename='icons/visa.svg') }}" alt="Visa">
+                                <img src="{{ url_for('static', filename='icons/mastercard.svg') }}" alt="Mastercard">
+                                <img src="{{ url_for('static', filename='icons/amex.svg') }}" alt="Amex">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card-details fade-in">
+                    <div class="form-group">
+                        <label>Número de Tarjeta</label>
+                        <div class="input-with-icon">
+                            <input type="text" id="numero_tarjeta" name="numero_tarjeta" 
+                                   placeholder="0000 0000 0000 0000" maxlength="19" required
+                                   autocomplete="cc-number">
+                            <img id="icono_tarjeta" src="" style="display: none;" class="card-brand-icon">
+                        </div>
+                        <div id="tipo-detection-feedback" class="detection-feedback" style="display:none;">
+                            Detectado: <span id="tipo_detectado"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nombre del Titular</label>
+                        <input type="text" name="nombre_titular" placeholder="Como figura en la tarjeta" required style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Vencimiento</label>
+                            <input type="text" id="fecha_vencimiento" name="fecha_vencimiento" 
+                                   placeholder="MM/YY" maxlength="5" required>
+                        </div>
+                        <div class="form-group half">
+                            <label>CVV / CVC</label>
+                            <div class="input-with-icon">
+                                <input type="password" id="cvv" name="cvv" placeholder="123" maxlength="4" required>
+                                <span class="cvv-icon">🔒</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-pagar">
+                    ✅ Pagar ${{ "%.2f"|format(total) }}
+                </button>
+                
+                <p class="secure-note">🔒 Tus datos viajan encriptados y seguros.</p>
+            </form>
+        </div>
+
+        <div class="summary-section">
+            <div class="summary-card">
+                <h3>🛒 Resumen del Pedido</h3>
+                <div class="summary-items">
+                    {% for item in carrito %}
+                    <div class="summary-item">
+                        <div class="item-info">
+                            <span class="item-name">{{ item.nombre }}</span>
+                            <span class="item-qty">x{{ item.cantidad }}</span>
+                        </div>
+                        <span class="item-price">${{ "%.2f"|format(item.subtotal) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="summary-total">
+                    <span>Total a Pagar</span>
+                    <span class="total-amount">${{ "%.2f"|format(total) }}</span>
+                </div>
+                <a href="{{ url_for('ver_carrito') }}" class="btn-back">✏️ Modificar Carrito</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .checkout-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .checkout-grid {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 2rem;
+    }
+
+    /* Sección Izquierda (Formulario) */
+    .payment-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+        margin-bottom: 1.5rem;
+        color: #333;
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 0.5rem;
+    }
+
+    .option-group {
+        border: 2px solid #4caf50;
+        background: #e8f5e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .radio-label {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        align-items: center;
+        margin-left: 10px;
+        cursor: pointer;
+        font-weight: 600;
+    }
+
+    .card-icons img {
+        height: 24px;
+        margin-left: 5px;
+    }
+
+    /* Campos del Formulario */
+    .form-group {
+        margin-bottom: 1.2rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: #555;
+        font-size: 0.9rem;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+        border-color: #4caf50;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .form-group.half {
+        flex: 1;
+    }
+
+    /* Input con Icono */
+    .input-with-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-brand-icon {
+        position: absolute;
+        right: 12px;
+        height: 24px;
+        width: auto;
+    }
+
+    .cvv-icon {
+        position: absolute;
+        right: 12px;
+        font-size: 1.2rem;
+    }
+
+    /* Botón Pagar */
+    .btn-pagar {
+        width: 100%;
+        background: linear-gradient(135deg, #4caf50, #2e7d32);
+        color: white;
+        border: none;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        margin-top: 1rem;
+    }
+
+    .btn-pagar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .secure-note {
+        text-align: center;
+        font-size: 0.85rem;
+        color: #888;
+        margin-top: 1rem;
+    }
+
+    /* Sección Derecha (Resumen) */
+    .summary-card {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #eee;
+        position: sticky;
+        top: 20px;
+    }
+
+    .summary-card h3 {
+        margin-top: 0;
+        padding-bottom: 1rem;
+        border-bottom: 1px dashed #ccc;
+    }
+
+    .summary-items {
+        margin: 1rem 0;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+        font-size: 0.95rem;
+    }
+
+    .item-qty {
+        color: #888;
+        font-size: 0.9rem;
+        margin-left: 5px;
+    }
+
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 2px solid #ddd;
+        padding-top: 1rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .total-amount {
+        color: #4caf50;
+        font-size: 1.5rem;
+    }
+
+    .btn-back {
+        display: block;
+        text-align: center;
+        margin-top: 1.5rem;
+        color: #666;
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .btn-back:hover {
+        text-decoration: underline;
+    }
+
+    /* Detección de tarjeta feedback */
+    .detection-feedback {
+        font-size: 0.85rem;
+        margin-top: 5px;
+        font-weight: 600;
+    }
+    .detection-feedback.valid { color: #4caf50; }
+    .detection-feedback.error { color: #f44336; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .checkout-grid {
+            grid-template-columns: 1fr;
+        }
+        .summary-section {
+            order: -1; /* Mostrar resumen primero en móvil */
+        }
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/tarjeta.js') }}"></script>
+
+{% endblock %}

@@ -1,0 +1,267 @@
+{% extends "base_pdf.html" if es_pdf else "base.html" %}
+
+{% block title %}Comprobante de Pago{% endblock %}
+
+{% block content %}
+<div class="comprobante-container">
+    <div class="comprobante-header">
+        <div class="comprobante-titulo">
+            <h2>🧾 Comprobante de Pago</h2>
+            <p class="numero-pedido">N° {{ venta.numero_pedido or "VDL-20250001" }}</p>
+        </div>
+        <div class="estado-pedido estado-{{ venta.estado }}">
+            {{ venta.estado|upper }}
+        </div>
+    </div>
+
+    <div class="comprobante-body">
+        <div class="seccion-comprobante">
+            <h4>📋 Resumen del Pedido</h4>
+            <div class="detalle-pedido">
+                <div class="fila-detalle">
+                    <span>Fecha y Hora:</span>
+                    <span>{{ venta.fecha | string | truncate(19, true, '') }}</span>
+                </div>
+                
+                {% if current_user and current_user.is_authenticated %}
+                <div class="fila-detalle">
+                    <span>Cliente:</span>
+                    <span>{{ current_user.username }}</span>
+                </div>
+                {% endif %}
+                
+                <div class="fila-detalle">
+                    <span>Método de Pago:</span>
+                    <span class="metodo-pago-con-icono">
+                        {% if venta.tipo_tarjeta %}
+                            {% if not es_pdf %}
+                                <img src="{{ url_for('static', filename='icons/' ~ venta.tipo_tarjeta|lower ~ '.svg') }}" 
+                                     alt="{{ venta.tipo_tarjeta }}" 
+                                     class="icono-tarjeta"
+                                     onerror="this.style.display='none';">
+                            {% endif %}
+                            <span>{{ venta.tipo_tarjeta|upper }} •••• {{ venta.ultimos_4 }}</span>
+                        {% else %}
+                            <span>🏦 Transferencia / Efectivo</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion-comprobante">
+            <h4>🛒 Productos</h4>
+            <div class="tabla-productos">
+                <div class="fila-header">
+                    <span>Producto</span>
+                    <span>Cant.</span>
+                    <span>Unitario</span>
+                    <span>Subtotal</span>
+                </div>
+                {% for item in items %}
+                <div class="fila-producto">
+                    <span class="producto-nombre">{{ item.nombre }}</span>
+                    <span class="producto-cantidad">{{ item.cantidad }}</span>
+                    <span class="producto-precio">${{ "%.2f"|format(item.precio_unitario) }}</span>
+                    <span class="producto-subtotal">${{ "%.2f"|format(item.cantidad * item.precio_unitario) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="seccion-comprobante totales">
+            <div class="total-general">
+                <span>Total:</span>
+                <span class="monto-total">${{ "%.2f"|format(venta.total) }}</span>
+            </div>
+        </div>
+
+        <div class="seccion-comprobante">
+            <h4>📧 Comprobante Electrónico</h4>
+            <div class="info-comprobante">
+                <p>Este comprobante es válido como constancia de operación exitosa.</p>
+                <div class="codigo-verificacion">
+                    <strong>Código de referencia:</strong> 
+                    <span class="codigo">{{ venta.numero_pedido or "VDL-20250001" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not es_pdf %}
+    <div class="comprobante-footer">
+        <div class="acciones-comprobante">
+            <button onclick="window.print()" class="btn btn-primary">
+                🖨️ Imprimir
+            </button>
+            
+            <a href="{{ url_for('descargar_comprobante', numero_pedido=venta.numero_pedido) }}" class="btn btn-success" target="_blank">
+                📥 Descargar PDF
+            </a>
+            
+            <a href="{{ url_for('mis_compras') }}" class="btn btn-secondary">
+                📋 Mis Compras
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-outline">
+                🏠 Inicio
+            </a>
+        </div>
+
+        {% if venta.estado == 'completada' %}
+        <div class="cancelacion-rapida">
+            <div class="alerta-cancelacion">
+                <div class="alerta-icono">⏰</div>
+                <div class="alerta-contenido">
+                    <strong>Cancelación rápida disponible</strong>
+                    <p>Podés cancelar esta compra dentro de los primeros 10 minutos.</p>
+                    <form method="POST" action="{{ url_for('cancelar_compra_rapida', numero_pedido=venta.numero_pedido) }}" 
+                          style="margin-top: 0.5rem;" id="form-cancelar">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-warning btn-small" 
+                                id="btn-cancelar"
+                                onclick="return confirm('¿Estás seguro de que querés cancelar esta compra?')">
+                            🚫 Cancelar compra
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if not es_pdf %}
+<style>
+/* Estilos Generales del Comprobante */
+.comprobante-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.comprobante-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    color: white;
+}
+
+.comprobante-titulo h2 { margin: 0 0 0.5rem 0; font-size: 1.8rem; }
+.numero-pedido { margin: 0; opacity: 0.9; font-size: 1.1rem; font-weight: 500; }
+
+.estado-pedido {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.estado-completada { background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.4); }
+.estado-cancelada { background: #ffebee; color: #d32f2f; border: 1px solid #ef5350; }
+
+.comprobante-body { padding: 2rem; }
+.seccion-comprobante { margin-bottom: 2rem; }
+.seccion-comprobante h4 { margin: 0 0 1rem 0; color: #2e7d32; font-size: 1.2rem; border-bottom: 2px solid #e8f5e9; padding-bottom: 0.5rem; }
+
+.detalle-pedido { display: flex; flex-direction: column; gap: 0.8rem; }
+.fila-detalle { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed #e0e0e0; }
+
+.metodo-pago-con-icono { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.icono-tarjeta { height: 24px; width: auto; object-fit: contain; vertical-align: middle; }
+
+.tabla-productos { display: flex; flex-direction: column; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; }
+.fila-header { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 1rem; background: #f1f8e9; font-weight: 700; color: #33691e; text-align: right; }
+.fila-header span:first-child { text-align: left; }
+
+.fila-producto { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; padding: 1rem; border-bottom: 1px solid #f0f0f0; align-items: center; text-align: right; }
+.fila-producto span:first-child { text-align: left; font-weight: 500; }
+.fila-producto:last-child { border-bottom: none; }
+
+.totales { background: #f9f9f9; padding: 1.5rem; border-radius: 8px; margin-top: 1rem; }
+.total-general { display: flex; justify-content: space-between; align-items: center; font-size: 1.4rem; font-weight: 800; color: #2e7d32; }
+
+.codigo-verificacion { margin-top: 1rem; padding: 1rem; background: #e3f2fd; border-radius: 4px; border-left: 4px solid #2196f3; color: #0d47a1; }
+.codigo { font-family: 'Courier New', monospace; font-weight: 700; letter-spacing: 1px; }
+
+/* Footer y Botones */
+.comprobante-footer { padding: 2rem; background: #f8f9fa; border-top: 1px solid #eee; }
+.acciones-comprobante { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: 600; text-decoration: none; transition: all 0.3s ease; cursor: pointer; border: none; font-size: 1rem; gap: 8px; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.btn-primary { background: #2196f3; color: white; }
+.btn-success { background: #4caf50; color: white; }
+.btn-secondary { background: #78909c; color: white; }
+.btn-outline { border: 2px solid #4caf50; color: #4caf50; background: transparent; }
+.btn-outline:hover { background: #4caf50; color: white; }
+.btn-warning { background: #ff9800; color: white; }
+
+/* Cancelación */
+.alerta-cancelacion { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; background: #fff3e0; border-radius: 8px; border-left: 4px solid #ff9800; }
+
+@media (max-width: 768px) {
+    .comprobante-container { margin: 1rem; }
+    .comprobante-header { flex-direction: column; text-align: center; gap: 1rem; }
+    .fila-header, .fila-producto { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .fila-header { display: none; }
+    .fila-producto { display: flex; flex-direction: column; align-items: flex-start; text-align: left; }
+    .fila-producto span { width: 100%; display: flex; justify-content: space-between; }
+    .fila-producto span::before { content: attr(class); text-transform: capitalize; font-weight: bold; color: #666; }
+}
+
+@media print {
+    .comprobante-footer, .cancelacion-rapida, header, footer { display: none !important; }
+    .comprobante-container { box-shadow: none; margin: 0; max-width: 100%; }
+}
+</style>
+
+<script>
+// Script de cuenta regresiva para cancelar
+document.addEventListener('DOMContentLoaded', function() {
+    const btnCancelar = document.getElementById('btn-cancelar');
+    if (!btnCancelar) return;
+
+    const fechaVentaStr = '{{ venta.fecha|default(fecha)|string }}';
+    let fechaVenta;
+    
+    try {
+        let cleanDate = fechaVentaStr.replace(' ', 'T');
+        if (cleanDate.length < 10) throw "Fecha corta"; 
+        if (!cleanDate.includes('.')) cleanDate += '.000Z'; // Asumir UTC si no hay info
+        fechaVenta = new Date(cleanDate);
+        if (isNaN(fechaVenta.getTime())) throw "Fecha inválida";
+    } catch (e) {
+        console.warn("Error fecha:", e);
+        return;
+    }
+
+    function verificarTiempo() {
+        const ahora = new Date();
+        // Ajuste manual de zona horaria si es necesario (-3 horas para Argentina si el server es UTC)
+        // const ahoraArg = new Date(ahora.getTime() - (3 * 60 * 60 * 1000));
+        
+        const diferenciaMs = ahora - fechaVenta; 
+        const minutosTranscurridos = diferenciaMs / (1000 * 60);
+        
+        if (minutosTranscurridos > 10) {
+            btnCancelar.disabled = true;
+            btnCancelar.innerHTML = '🔒 Tiempo expirado';
+            btnCancelar.style.opacity = '0.6';
+            btnCancelar.style.cursor = 'not-allowed';
+        }
+    }
+    
+    verificarTiempo();
+    setInterval(verificarTiempo, 30000);
+});
+</script>
+{% endif %}
+{% endblock %}

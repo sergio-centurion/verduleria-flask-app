@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Verdulería Fres{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <style>
+        /* Estilos Generales */
+        .carrito-link {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .carrito-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .carrito-badge {
+            background: #ff4444;
+            color: white;
+            border-radius: 50%;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            min-width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .carrito-badge.pulse { animation: pulse 0.6s ease-in-out; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+            font-weight: 500;
+        }
+        .alert-success { background-color: #d4edda; color: #155724; border-left-color: #28a745; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-left-color: #17a2b8; }
+        .alert-warning { background-color: #fff3cd; color: #856404; border-left-color: #ffc107; }
+
+        /* Toasts */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            max-width: 350px;
+            border-left: 4px solid;
+            background: white; /* Fallback */
+            animation: slideInRight 0.3s ease;
+        }
+        
+        .toast-notification.success { background: #d4edda; color: #155724; border-left-color: #28a745; }
+        .toast-notification.error { background: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+        .toast-notification.warning { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
+        .toast-notification.info { background: #d1ecf1; color: #0c5460; border-left-color: #17a2b8; }
+
+        .toast-content { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .toast-message { flex: 1; font-weight: 500; }
+        .toast-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; opacity: 0.7; }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            header { flex-direction: column; text-align: center; gap: 1rem; padding: 1rem; }
+            nav { flex-direction: column; width: 100%; gap: 0.5rem; }
+            nav a, .logout-btn { display: block; text-align: center; padding: 0.75rem; width: 100%; }
+            .carrito-link { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-brand">
+            <h1>Verdulería Fres</h1>
+            <span class="tagline">Productos frescos directamente a tu mesa</span>
+        </div>
+        <nav>
+            <a href="{{ url_for('index') }}">🏠 Inicio</a>
+
+            {% if current_user.is_authenticated %}
+                
+                {% if current_user.rol == 'dueno' %}
+                    <a href="{{ url_for('panel_dueno') }}">🔧 Panel Dueño</a>
+                {% elif current_user.rol == 'vendedor' %}
+                    <a href="{{ url_for('vendedor_view') }}">📊 Panel Vendedor</a>
+                {% endif %}
+                
+                <a href="{{ url_for('ver_carrito') }}" class="carrito-link" id="carrito-link-main">
+                    🛒 Carrito <span id="contador-carrito" class="carrito-badge">0</span>
+                </a>
+                
+                {% if current_user.rol == 'cliente' %}
+                    <a href="{{ url_for('mis_compras') }}">📋 Mis Compras</a>
+                {% endif %}
+                
+                <a href="{{ url_for('logout') }}" class="logout-btn">🚪 Salir</a>
+
+            {% else %}
+                
+                <a href="{{ url_for('ver_carrito') }}" class="carrito-link" id="carrito-link-main">
+                    🛒 Carrito <span id="contador-carrito" class="carrito-badge">0</span>
+                </a>
+                
+                <a href="{{ url_for('login') }}">🔑 Iniciar Sesión</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="fade-in">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Verdulería Fres - Productos frescos</p>
+    </footer>
+
+    <script>
+        // Configuración Global
+        const usuarioAutenticado = JSON.parse('{{ current_user.is_authenticated | tojson }}');
+
+        // Sistema de Toasts (Notificaciones)
+        function mostrarToast(mensaje, tipo) {
+            if (tipo === undefined) tipo = 'info';
+            // Limpiar anteriores
+            document.querySelectorAll('.toast-notification').forEach(t => t.remove());
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification ' + tipo;
+            toast.innerHTML = `<div class="toast-content"><span class="toast-message">${mensaje}</span><button class="toast-close">×</button></div>`;
+            document.body.appendChild(toast);
+            
+            // Cerrar al click
+            toast.querySelector('.toast-close').onclick = () => cerrarToast(toast);
+            
+            // Auto cerrar
+            setTimeout(() => cerrarToast(toast), 4000);
+        }
+
+        function cerrarToast(toast) {
+            if (!toast.parentNode) return;
+            toast.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 App iniciada. Usuario:', usuarioAutenticado ? 'Registrado' : 'Invitado');
+
+            // Animación simple del carrito
+            const carritoLink = document.getElementById('carrito-link-main');
+            const carritoBadge = document.getElementById('contador-carrito');
+            
+            if (carritoLink) {
+                carritoLink.addEventListener('mouseenter', function() {
+                    if (carritoBadge) carritoBadge.style.transform = 'scale(1.1)';
+                });
+                carritoLink.addEventListener('mouseleave', function() {
+                    if (carritoBadge) carritoBadge.style.transform = 'scale(1)';
+                });
+                
+                // NOTA: ELIMINÉ EL BLOQUEO DE CLICK PARA INVITADOS
+                // Ahora cualquiera puede hacer click en el carrito
+            }
+        });
+
+        // Exportar funciones globales
+        window.mostrarToast = mostrarToast;
+        window.actualizarCarrito = function() {
+            if (window.carritoManager) window.carritoManager.actualizarCarrito();
+        };
+    </script>
+
+    <script src="{{ url_for('static', filename='js/carrito.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,820 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - Dueño{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-header">
+        <h2>🛡️ Dashboard de Administración</h2>
+        <p class="subtitle">Control total y supervisión del negocio</p>
+    </div>
+
+    <!-- ESTADÍSTICAS PRINCIPALES -->
+    {% if stats %}
+    <div class="stats-grid">
+        <div class="stat-card stat-ventas">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <p class="stat-label">Ventas Totales</p>
+                <p class="stat-value">{{ stats.total_ventas or 0 }}</p>
+                <p class="stat-subtitle">Transacciones completadas</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-ingresos">
+            <div class="stat-icon">💰</div>
+            <div class="stat-content">
+                <p class="stat-label">Ingresos Totales</p>
+                <p class="stat-value">${{ "%.2f"|format(stats.total_ingresos or 0) }}</p>
+                <p class="stat-subtitle">Ingresos brutos</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-ticket">
+            <div class="stat-icon">🎯</div>
+            <div class="stat-content">
+                <p class="stat-label">Ticket Promedio</p>
+                <p class="stat-value">${{ "%.2f"|format(stats.ticket_promedio or 0) }}</p>
+                <p class="stat-subtitle">Por transacción</p>
+            </div>
+        </div>
+
+        <div class="stat-card stat-pendientes">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-content">
+                <p class="stat-label">Solicitudes Pendientes</p>
+                <p class="stat-value">{{ cambios_pendientes|length }}</p>
+                <p class="stat-subtitle">Esperando tu aprobación</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- SECCIÓN CRÍTICA: AUTORIZACIÓN DE CAMBIOS -->
+    <div class="section critical-section">
+        <div class="section-header">
+            <h3>🔐 Control de Solicitudes - Pendientes de Aprobación</h3>
+            <span class="badge-pendientes">{{ cambios_pendientes|length }} pendientes</span>
+        </div>
+        
+        {% if cambios_pendientes %}
+          <div class="solicitudes-grid">
+            {% for cambio in cambios_pendientes %}
+            <div class="solicitud-card {% if cambio.porcentaje_cambio > 50 %}cambio-alto{% elif cambio.porcentaje_cambio < -50 %}cambio-bajo{% endif %}">
+                <div class="solicitud-header">
+                    <div class="producto-info">
+                        <h4>{{ cambio.nombre }}</h4>
+                        <span class="vendedor-info">Por: {{ cambio.vendedor }}</span>
+                    </div>
+                    <div class="fecha-solicitud">
+                        {{ cambio.fecha_solicitud[:16] }}
+                    </div>
+                </div>
+                
+                <div class="solicitud-body">
+                    <div class="cambio-detalle">
+                        <!-- CAMBIO DE STOCK -->
+                        <div class="cambio-item">
+                            <span class="cambio-label">Stock:</span>
+                            <div class="cambio-visual">
+                                <span class="valor-anterior">{{ cambio.stock_anterior }}</span>
+                                <span class="arrow">→</span>
+                                <span class="valor-nuevo">{{ cambio.stock_nuevo }}</span>
+                                <span class="porcentaje {% if cambio.porcentaje_cambio > 0 %}positivo{% else %}negativo{% endif %}">
+                                    {{ "%+.1f"|format(cambio.porcentaje_cambio) }}%
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- CAMBIO DE PRECIO (NUEVO) -->
+                        {% if cambio.precio_anterior != cambio.precio_nuevo %}
+                        <div class="cambio-item">
+                            <span class="cambio-label">Precio:</span>
+                            <div class="cambio-visual">
+                                <span class="valor-anterior">${{ "%.2f"|format(cambio.precio_anterior) }}</span>
+                                <span class="arrow">→</span>
+                                <span class="valor-nuevo">${{ "%.2f"|format(cambio.precio_nuevo) }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if cambio.motivo %}
+                        <div class="motivo-cambio">
+                            <strong>Motivo:</strong>
+                            <p>{{ cambio.motivo }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="solicitud-actions">
+                    <form method="POST" action="{{ url_for('autorizar_cambio_stock', cambio_id=cambio.id) }}" 
+                          class="action-form" onsubmit="return confirmarAprobacion(this)">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-success btn-approve">
+                            ✅ Autorizar Cambio
+                        </button>
+                    </form>
+                    
+                    <form method="POST" action="{{ url_for('rechazar_cambio_stock', cambio_id=cambio.id) }}" 
+                          class="action-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-danger btn-reject" 
+                                onclick="return confirm('¿Rechazar esta solicitud de {{ cambio.vendedor }}?')">
+                            ❌ Rechazar
+                        </button>
+                    </form>
+                    
+                    <button class="btn btn-info btn-details" 
+                            onclick="verDetallesProducto('{{ cambio.producto_id }}')">
+                        📊 Ver Detalles
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state success-state">
+            <div class="empty-icon">🎉</div>
+            <h4>¡Todo al día!</h4>
+            <p>No hay solicitudes pendientes de aprobación</p>
+          </div>
+        {% endif %}
+    </div>
+
+    <!-- ACCIONES RÁPIDAS -->
+    <div class="section">
+        <h3>⚡ Acciones Rápidas</h3>
+        <div class="acciones-rapidas">
+            <a href="{{ url_for('solicitudes_pendientes') }}" class="accion-rapida">
+                <div class="accion-icon">📋</div>
+                <div class="accion-content">
+                    <strong>Ver Todas las Solicitudes</strong>
+                    <p>Gestión completa de aprobaciones</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('index') }}" class="accion-rapida">
+                <div class="accion-icon">🏪</div>
+                <div class="accion-content">
+                    <strong>Ver Tienda</strong>
+                    <p>Experiencia del cliente</p>
+                </div>
+            </a>
+            
+            <div class="accion-rapida" onclick="generarReporte()">
+                <div class="accion-icon">📈</div>
+                <div class="accion-content">
+                    <strong>Generar Reporte</strong>
+                    <p>Reporte de ventas y stock</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP PRODUCTOS -->
+    {% if top_productos %}
+    <div class="section">
+        <h3>🏆 Productos Más Vendidos</h3>
+        <div class="top-list">
+            {% for prod in top_productos %}
+            <div class="top-item">
+                <span class="top-rank">{{ loop.index }}</span>
+                <div class="top-info">
+                    <p class="top-nombre">{{ prod.nombre }}</p>
+                    <p class="top-cantidad">{{ prod.total_vendido }} unidades vendidas</p>
+                </div>
+                <div class="top-badge">
+                    <span class="badge-ventas">🔥 Popular</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- HISTORIAL DE AUTORIZACIONES -->
+    <div class="section">
+        <div class="section-header">
+            <h3>📝 Historial de Cambios Autorizados</h3>
+            <a href="#" class="btn-link">Ver completo</a>
+        </div>
+        
+        {% if cambios_autorizados %}
+          <div class="historial-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Stock (Ant → Nuevo)</th>
+                        <th>Precio (Ant → Nuevo)</th>
+                        <th>Vendedor</th>
+                        <th>Autorizado por</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cambio in cambios_autorizados %}
+                    <tr>
+                        <td class="producto-cell">
+                            <strong>{{ cambio.nombre }}</strong>
+                        </td>
+                        <td class="cambio-cell">
+                            <span class="cambio-stock">
+                                {{ cambio.stock_anterior }} → {{ cambio.stock_nuevo }}
+                            </span>
+                        </td>
+                         <td class="cambio-cell">
+                            <span class="cambio-precio">
+                                ${{ "%.2f"|format(cambio.precio_anterior) }} → ${{ "%.2f"|format(cambio.precio_nuevo) }}
+                            </span>
+                        </td>
+                        <td class="vendedor-cell">
+                            <span class="vendedor-badge">{{ cambio.vendedor }}</span>
+                        </td>
+                        <td class="autorizado-cell">
+                            <span class="autorizado-badge">✅ {{ cambio.autorizado_por }}</span>
+                        </td>
+                        <td class="fecha-cell">
+                            {{ cambio.fecha_autorizacion[:16] }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="empty-state">Aún no hay cambios autorizados en el sistema</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para panel_dueno.html */
+.admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.admin-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #4caf50;
+}
+
+.admin-header h2 {
+    margin: 0 0 0.5rem 0;
+    color: #1b5e20;
+    font-size: 2.2rem;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-label {
+    margin: 0 0 0.5rem 0;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    margin: 0 0 0.25rem 0;
+    color: #1b5e20;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.stat-subtitle {
+    margin: 0;
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.stat-ventas {
+    border-left: 4px solid #2196f3;
+}
+
+.stat-ingresos {
+    border-left: 4px solid #4caf50;
+}
+
+.stat-ticket {
+    border-left: 4px solid #ff9800;
+}
+
+.stat-pendientes {
+    border-left: 4px solid #f44336;
+}
+
+.section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.badge-pendientes {
+    background: #f44336;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.critical-section {
+    border: 2px solid #d32f2f;
+    background: #ffebee;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.2);
+}
+
+.critical-section .section-header h3 {
+    color: #d32f2f;
+}
+
+.solicitudes-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.solicitud-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #ff9800;
+}
+
+.solicitud-card.cambio-alto {
+    border-left-color: #f44336;
+    background: #fff3f3;
+}
+
+.solicitud-card.cambio-bajo {
+    border-left-color: #ff9800;
+    background: #fffaf0;
+}
+
+.solicitud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.producto-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: #1b5e20;
+    font-size: 1.2rem;
+}
+
+.vendedor-info {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.fecha-solicitud {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.cambio-detalle {
+    margin-bottom: 1rem;
+}
+
+.cambio-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.cambio-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.cambio-visual {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.valor-anterior {
+    color: #999;
+    text-decoration: line-through;
+}
+
+.arrow {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.valor-nuevo {
+    color: #4caf50;
+}
+
+.porcentaje {
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.porcentaje.positivo {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.porcentaje.negativo {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.motivo-cambio {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 3px solid #2196f3;
+}
+
+.motivo-cambio strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.motivo-cambio p {
+    margin: 0;
+    color: #666;
+    font-style: italic;
+}
+
+.solicitud-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-form {
+    flex: 1;
+    min-width: 150px;
+}
+
+.btn-approve, .btn-reject, .btn-details {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-approve {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #43a047;
+}
+
+.btn-reject {
+    background: #f44336;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #d32f2f;
+}
+
+.btn-details {
+    background: #2196f3;
+    color: white;
+}
+
+.btn-details:hover {
+    background: #1976d2;
+}
+
+.acciones-rapidas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.accion-rapida {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    cursor: pointer;
+}
+
+.accion-rapida:hover {
+    border-color: #4caf50;
+    background: white;
+    transform: translateY(-2px);
+}
+
+.accion-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.accion-content strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #333;
+}
+
+.accion-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.top-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.top-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.top-item:hover {
+    background: #e9ecef;
+}
+
+.top-rank {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4caf50;
+    min-width: 40px;
+    text-align: center;
+}
+
+.top-info {
+    flex: 1;
+}
+
+.top-nombre {
+    margin: 0;
+    font-weight: 600;
+    color: #333;
+}
+
+.top-cantidad {
+    margin: 0.3rem 0 0 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.top-badge {
+    flex-shrink: 0;
+}
+
+.badge-ventas {
+    background: #ff9800;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.historial-table {
+    overflow-x: auto;
+}
+
+.historial-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.historial-table th,
+.historial-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.historial-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.producto-cell {
+    font-weight: 600;
+}
+
+.cambio-cell {
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.vendedor-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.autorizado-badge {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.fecha-cell {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #666;
+}
+
+.empty-state.success-state {
+    background: #e8f5e9;
+    border-radius: 8px;
+    border: 2px solid #4caf50;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.empty-state h4 {
+    margin: 0 0 0.5rem 0;
+    color: #333;
+}
+
+.empty-state p {
+    margin: 0;
+}
+
+.btn-link {
+    color: #2196f3;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 0.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .solicitud-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .solicitud-actions {
+        flex-direction: column;
+    }
+    
+    .cambio-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .acciones-rapidas {
+        grid-template-columns: 1fr;
+    }
+    
+    .top-item {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+<script>
+// Función para confirmar aprobación de cambios
+function confirmarAprobacion(form) {
+    const card = form.closest('.solicitud-card');
+    const producto = card.querySelector('h4').textContent;
+    const vendedor = card.querySelector('.vendedor-info').textContent.replace('Por: ', '');
+    
+    return confirm(`¿Autorizar el cambio de "${producto}" solicitado por ${vendedor}? Esto actualizará el stock y el precio.`);
+}
+
+// Función para ver detalles del producto
+function verDetallesProducto(productoId) {
+    alert(`📊 Aquí se mostrarían los detalles completos del producto ID: ${productoId}\n\nEn una implementación completa, esto abriría un modal con:\n- Historial de ventas\n- Stock histórico\n- Precios anteriores\n- Solicitudes previas`);
+}
+
+// Función para generar reportes
+function generarReporte() {
+    alert('📈 Generando reporte completo...\n\nIncluiría:\n- Ventas por período\n- Productos más vendidos\n- Stock actual vs ideal\n- Solicitudes procesadas\n- Ingresos vs gastos');
+    
+    // Simular descarga
+    setTimeout(function() {
+        alert('✅ Reporte generado y descargado como PDF');
+    }, 1000);
+}
+
+// Actualizar contador de solicitudes pendientes en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const solicitudes = document.querySelectorAll('.solicitud-card');
+    
+    // El contador ya está sincronizado con la cantidad de tarjetas
+    console.log(`Solicitudes pendientes: ${solicitudes.length}`);
+});
+</script>
+{% endblock %}

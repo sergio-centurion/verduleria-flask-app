@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Producto - Verdulería Fres</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .api-section {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-left: 4px solid #17a2b8;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .btn-success {
+            background: #4caf50;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #api-suggestions {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        #api-loading {
+            text-align: center;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Verdulería Fres</h1>
+        <nav>
+            <a href="{{ url_for('vendedor_view') }}">Volver al Panel</a>
+        </nav>
+    </header>
+    <main>
+        <div class="container">
+            <h2>Agregar Nuevo Producto</h2>
+            
+            <!-- SECCIÓN NUEVA: Búsqueda en API -->
+            <div class="api-section">
+                <h4>🔍 Búsqueda Inteligente (Opcional)</h4>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="buscar_api">
+                    <label class="form-check-label" for="buscar_api">
+                        Buscar información automática del producto
+                    </label>
+                </div>
+                
+                <div id="api-suggestions" style="display: none;">
+                    <div id="api-content"></div>
+                </div>
+                
+                <div id="api-loading" style="display: none;">
+                    <p>🔄 Buscando en base de datos de productos...</p>
+                </div>
+            </div>
+
+            <!-- FORMULARIO ORIGINAL -->
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre del Producto *</label>
+                    <input type="text" id="nombre" name="nombre" required placeholder="Ej: Manzana Roja">
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" name="descripcion" placeholder="Descripción del producto..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="precio">Precio ($) *</label>
+                        <input type="number" id="precio" name="precio" step="0.01" required>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="stock">Stock Inicial *</label>
+                        <input type="number" id="stock" name="stock" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <input type="text" id="categoria" name="categoria" placeholder="Ej: Frutas, Verduras, etc.">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-success">Agregar Producto</button>
+                    <a href="{{ url_for('vendedor_view') }}" class="btn-secondary">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxAPI = document.getElementById('buscar_api');
+        const inputNombre = document.getElementById('nombre');
+        const apiSuggestions = document.getElementById('api-suggestions');
+        const apiContent = document.getElementById('api-content');
+        const apiLoading = document.getElementById('api-loading');
+        
+        let timeoutId = null;
+        
+        // Buscar cuando se escribe en nombre (con delay)
+        inputNombre.addEventListener('input', function() {
+            if (checkboxAPI.checked && this.value.length > 2) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    buscarEnAPI(this.value);
+                }, 1000);
+            }
+        });
+        
+        // Activar/desactivar búsqueda automática
+        checkboxAPI.addEventListener('change', function() {
+            if (this.checked && inputNombre.value.length > 2) {
+                buscarEnAPI(inputNombre.value);
+            } else {
+                apiSuggestions.style.display = 'none';
+            }
+        });
+        
+        async function buscarEnAPI(nombre) {
+            apiLoading.style.display = 'block';
+            apiSuggestions.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/sugerir_producto?q=' + encodeURIComponent(nombre));
+                const datos = await response.json();
+                
+                apiLoading.style.display = 'none';
+                
+                if (datos.encontrado) {
+                    mostrarSugerencia(datos);
+                } else {
+                    apiContent.innerHTML = '<div style="color: #856404;"><strong>⚠️ No encontrado</strong><p>' + (datos.mensaje || 'Producto no encontrado en la base de datos') + '</p></div>';
+                    apiSuggestions.style.display = 'block';
+                }
+            } catch (error) {
+                apiLoading.style.display = 'none';
+                apiContent.innerHTML = '<div style="color: #721c24;"><strong>❌ Error de conexión</strong><p>No se pudo conectar con la base de datos</p></div>';
+                apiSuggestions.style.display = 'block';
+            }
+        }
+        
+        function mostrarSugerencia(datos) {
+            apiContent.innerHTML = `
+                <div>
+                    <strong>✅ Producto encontrado:</strong>
+                    <div style="margin-top: 0.5rem;">
+                        <p><strong>Nombre:</strong> ${datos.nombre}</p>
+                        <p><strong>Categoría:</strong> ${datos.categoria}</p>
+                        <p><strong>Marca:</strong> ${datos.marca || 'No especificada'}</p>
+                        ${datos.ingredientes ? '<p><strong>Ingredientes:</strong> ' + datos.ingredientes.substring(0, 100) + '...</p>' : ''}
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <button type="button" class="btn-primary" onclick="usarSugerencia('${datos.nombre.replace(/'/g, "\\'")}', '${datos.categoria.replace(/'/g, "\\'")}')">
+                            Usar estos datos
+                        </button>
+                    </div>
+                </div>
+            `;
+            apiSuggestions.style.display = 'block';
+        }
+    });
+
+    // Función global para usar sugerencia
+    function usarSugerencia(nombre, categoria) {
+        document.getElementById('nombre').value = nombre;
+        document.getElementById('categoria').value = categoria;
+        document.getElementById('api-suggestions').style.display = 'none';
+    }
+    </script>
+</body>
+</html>

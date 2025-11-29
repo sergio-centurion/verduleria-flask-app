@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% block title %}Panel Vendedor{% endblock %}
+
+{% block content %}
+<div class="vendedor-container">
+    <div class="vendedor-header">
+        <h2>📦 Mi Inventario - Modo Supervisado</h2>
+        <p class="subtitle">Tus cambios requieren aprobación del dueño</p>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+        <a href="{{ url_for('agregar_producto') }}" class="btn btn-success">+ Agregar Producto</a>
+    </div>
+
+    {% if productos_bajo %}
+        <div class="alert alert-warning">
+            <div class="alert-icon">⚠️</div>
+            <div class="alert-content">
+                <strong>Productos con Stock Bajo:</strong>
+                {% for p in productos_bajo %}
+                    {{ p.nombre }} ({{ p.stock }} unidades){% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    {% if cambios_pendientes %}
+        <div class="card solicitudes-card">
+            <div class="card-header">
+                <h3>⏳ Mis Solicitudes Pendientes</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="solicitudes-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Stock (Ant → Nuevo)</th>
+                                <th>Precio (Ant → Nuevo)</th>
+                                <th>Cambio Stock (%)</th>
+                                <th>Fecha Solicitud</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cs in cambios_pendientes %}
+                                <tr>
+                                    <td><strong>{{ cs.nombre }}</strong></td>
+                                    <td>{{ cs.stock_anterior }} → {{ cs.stock_nuevo }}</td>
+                                    <td>${{ "%.2f"|format(cs.precio_anterior) }} → ${{ "%.2f"|format(cs.precio_nuevo) }}</td>
+                                    <td>
+                                        <span class="badge {% if cs.porcentaje_cambio > 0 %}badge-success{% else %}badge-danger{% endif %}">
+                                            {{ "%+.1f"|format(cs.porcentaje_cambio) }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ cs.fecha_solicitud[:16] }}</td>
+                                    <td>
+                                        <span class="estado-badge estado-pendiente">⏳ Pendiente</span>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="card productos-card">
+        <div class="card-header">
+            <h3>🛍️ Mis Productos Activos</h3>
+            <span class="badge-count">{{ productos|length }} productos</span>
+        </div>
+        
+        <div class="card-body">
+            {% if productos %}
+                <div class="table-responsive">
+                    <table class="productos-table">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Categoría</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in productos %}
+                                <tr class="producto-row {% if p.stock < 10 %}low-stock{% endif %}">
+                                    <td class="producto-nombre">
+                                        <strong>{{ p.nombre }}</strong>
+                                        {% if p.stock < 10 %}
+                                            <span class="stock-alert">⚠️ Bajo</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="producto-descripcion">
+                                        {{ p.descripcion[:50] }}{% if p.descripcion|length > 50 %}...{% endif %}
+                                    </td>
+                                    <td class="producto-precio">${{ "%.2f"|format(p.precio) }}</td>
+                                    <td class="producto-stock">
+                                        <span class="stock-badge {% if p.stock == 0 %}stock-zero{% elif p.stock < 10 %}stock-low{% else %}stock-ok{% endif %}">
+                                            {{ p.stock }}
+                                        </span>
+                                    </td>
+                                    <td class="producto-categoria">
+                                        <span class="categoria-tag">{{ p.categoria or 'General' }}</span>
+                                    </td>
+                                    <td class="producto-acciones">
+                                        <div class="acciones-buttons">
+                                            <a href="{{ url_for('solicitar_cambio_producto', producto_id=p.id) }}" 
+                                               class="btn btn-primary btn-small" title="Solicitar cambio al dueño">
+                                                ✏️ Solicitar Cambio
+                                            </a>
+                                            <form method="POST" action="{{ url_for('solicitar_baja_producto', producto_id=p.id) }}" 
+                                                    style="display:inline;" onsubmit="return confirm('¿Solicitar baja de {{ p.nombre }}? Esto establecerá el stock a 0, requiere aprobación.')">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                <button type="submit" class="btn btn-danger btn-small" title="Solicitar baja al dueño">
+                                                    🗑️ Solicitar Baja
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">📦</div>
+                    <h4>No tienes productos activos</h4>
+                    <p>Comienza agregando tu primer producto</p>
+                    <a href="{{ url_for('agregar_producto') }}" class="btn btn-success">Agregar Primer Producto</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-icon">ℹ️</div>
+        <div class="info-content">
+            <h4>Modo Supervisado Activado</h4>
+            <p>Como vendedor, todas tus modificaciones de stock y precios requieren aprobación del dueño. 
+                Esto garantiza la seguridad y control del inventario.</p>
+            <ul>
+                <li>✅ Puedes <strong>agregar</strong> nuevos productos</li>
+                <li>✅ Puedes <strong>proponer</strong> cambios a productos existentes (Stock y Precio)</li>
+                <li>⏳ Los cambios requieren <strong>aprobación del dueño</strong></li>
+                <li>📊 Puedes <strong>ver</strong> el estado de tus solicitudes</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos específicos para vendedor.html */
+.vendedor-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.vendedor-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #4caf50;
+}
+
+.vendedor-header h2 {
+    margin: 0 0 0.5rem 0;
+    color: #1b5e20;
+    font-size: 2rem;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #4caf50, #43a047);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.badge-count {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.solicitudes-card {
+    border-left: 4px solid #ff9800;
+}
+
+.solicitudes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.solicitudes-table th,
+.solicitudes-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.solicitudes-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.badge {
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.badge-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-danger {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.estado-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.estado-pendiente {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.productos-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.productos-table th,
+.productos-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.productos-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    position: sticky;
+    top: 0;
+}
+
+.producto-row:hover {
+    background: #f8f9fa;
+}
+
+.producto-row.low-stock {
+    background: #fff3e0;
+}
+
+.producto-nombre {
+    font-weight: 600;
+    min-width: 150px;
+}
+
+.stock-alert {
+    background: #ff9800;
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+}
+
+.producto-descripcion {
+    max-width: 200px;
+    color: #666;
+}
+
+.producto-precio {
+    font-weight: 600;
+    color: #4caf50;
+    font-size: 1.1rem;
+}
+
+.stock-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 50px;
+    text-align: center;
+}
+
+.stock-zero {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.stock-low {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.stock-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.categoria-tag {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 0.3rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.producto-acciones {
+    min-width: 200px;
+}
+
+.acciones-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #2196f3;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1976d2;
+}
+
+.btn-danger {
+    background: #f44336;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #d32f2f;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state h4 {
+    margin: 0 0 1rem 0;
+    color: #666;
+}
+
+.empty-state p {
+    margin: 0 0 2rem 0;
+    color: #999;
+}
+
+.info-card {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.info-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.info-content h4 {
+    margin: 0 0 0.5rem 0;
+    color: #1976d2;
+}
+
+.info-content p {
+    margin: 0 0 1rem 0;
+    color: #333;
+}
+
+.info-content ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #555;
+}
+
+.info-content li {
+    margin-bottom: 0.25rem;
+}
+
+.alert {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.alert-warning {
+    background: #fff3e0;
+    border-left: 4px solid #ff9800;
+    color: #f57c00;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .vendedor-container {
+        padding: 0.5rem;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .acciones-buttons {
+        flex-direction: column;
+    }
+    
+    .productos-table {
+        font-size: 0.9rem;
+    }
+    
+    .productos-table th,
+    .productos-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .info-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesando Pago - Verdulería Fres</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .loading-icon {
+            font-size: 50px;
+            margin-bottom: 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4caf50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            margin: 25px 0;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #43a047);
+            border-radius: 3px;
+            animation: loading 3s ease-in-out forwards;
+        }
+
+        .btn-continuar {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .btn-continuar:hover {
+            background: #43a047;
+            transform: translateY(-2px);
+        }
+
+        .pedido-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(0); }
+        }
+
+        .countdown {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            color: #28a745;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="spinner"></div>
+        
+        <h1>🔄 Procesando tu Pago</h1>
+        
+        <div class="pedido-info">
+            <p><strong>Verdulería Fres</strong></p>
+            <p><strong>Total:</strong> $<span id="monto-total">0.00</span></p>
+            <p><strong>Método:</strong> <span id="metodo-pago">Tarjeta</span></p>
+        </div>
+
+        <p>Estamos procesando tu pago de forma segura...</p>
+        
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+        
+        <div class="countdown" id="countdown">Redirigiendo en 5 segundos</div>
+
+        <div class="security-badge">
+            <span>🔒</span> Pago seguro - SSL Encriptado
+        </div>
+        
+        <button class="btn-continuar" onclick="continuarAhora()">Continuar Ahora</button>
+    </div>
+
+    <script>
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const total = urlParams.get('total') || '0.00';
+        const metodo = urlParams.get('metodo') || 'Tarjeta';
+        const pedidoId = urlParams.get('pedido') || generarNumeroPedido();
+
+        // Actualizar información en la página
+        document.getElementById('monto-total').textContent = total;
+        document.getElementById('metodo-pago').textContent = metodo;
+
+        let countdown = 5;
+        const countdownElement = document.getElementById('countdown');
+        
+        // Actualizar contador
+        const countdownInterval = setInterval(() => {
+            countdown--;
+            countdownElement.textContent = `Redirigiendo en ${countdown} segundos`;
+            
+            if (countdown <= 0) {
+                clearInterval(countdownInterval);
+                redirigir();
+            }
+        }, 1000);
+
+        // Función para redirigir
+        function redirigir() {
+            window.location.href = `pago_exitoso?pedido=${pedidoId}&total=${total}`;
+        }
+
+        // Función para continuar manualmente
+        function continuarAhora() {
+            clearInterval(countdownInterval);
+            redirigir();
+        }
+
+        // Generar número de pedido si no viene en URL
+        function generarNumeroPedido() {
+            const fecha = new Date();
+            const timestamp = fecha.getTime().toString().slice(-6);
+            return `VD-${fecha.getFullYear()}${(fecha.getMonth()+1).toString().padStart(2, '0')}${fecha.getDate().toString().padStart(2, '0')}-${timestamp}`;
+        }
+
+        // Redirección automática después de 5 segundos (backup)
+        setTimeout(redirigir, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+ /* =============================
+   ESTILO GENERAL - VERDULERÍA ONLINE
+   ============================= */
+
+   * {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    background-image: url("https://placehold.co/1920x1080/e8f5e9/388e3c?text=Fondo+Verduler%C3%ADa");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* =============================
+   HEADER & NAV
+   ============================= */
+header {
+    background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header > div {
+    display: flex;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+nav {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.3s;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+}
+
+nav a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 0.9;
+}
+
+/* Estilos específicos del Carrito en Nav */
+.carrito-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.carrito-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.carrito-badge {
+    background: #ff4444;
+    color: white;
+    border-radius: 50%;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    min-width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+/* =============================
+   LAYOUT PRINCIPAL
+   ============================= */
+main {
+    flex: 1;
+    max-width: 1200px;
+    margin: 2rem auto;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.08);
+}
+
+footer {
+    background-color: #1b5e20;
+    color: white;
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.95rem;
+    margin-top: 2rem;
+}
+
+/* =============================
+   COMPONENTES UI (Botones, Alertas, Tablas)
+   ============================= */
+
+/* Botones */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success { background-color: #4caf50; color: white; }
+.btn-success:hover { background-color: #43a047; }
+
+.btn-danger { background-color: #d32f2f; color: white; }
+.btn-danger:hover { background-color: #b71c1c; }
+
+.btn-primary { background-color: #1976d2; color: white; }
+.btn-primary:hover { background-color: #1565c0; }
+
+.btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; }
+.btn-large { padding: 1rem 2rem; font-size: 1.1rem; }
+
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 8px 16px;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Alertas */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    border-left: 4px solid;
+}
+
+.alert-success { background-color: #d4edda; color: #155724; border-left-color: #28a745; }
+.alert-danger { background-color: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+.alert-info { background-color: #d1ecf1; color: #0c5460; border-left-color: #17a2b8; }
+.alert-warning { background-color: #fff3cd; color: #856404; border-left-color: #ffc107; }
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 1rem;
+    text-align: left;
+}
+
+th { background-color: #4caf50; color: white; font-weight: 600; }
+tr:nth-child(even) { background-color: #f9f9f9; }
+tr:hover { background-color: #f0f0f0; }
+
+/* =============================
+   FORMULARIOS
+   ============================= */
+form label {
+    display: block;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 0.3rem;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+/* =============================
+   VISTAS ESPECÍFICAS
+   ============================= */
+
+/* Productos Grid (Index) */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.producto-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.producto-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.producto-imagen {
+    height: 180px;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.img-placeholder {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #4caf50;
+    opacity: 0.7;
+}
+
+.producto-card .card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.producto-nombre { font-size: 1.3rem; margin-bottom: 0.5rem; color: #333; }
+.producto-categoria { background: #e3f2fd; color: #1976d2; padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; display: inline-block; }
+.producto-descripcion { color: #666; margin: 1rem 0; line-height: 1.5; }
+.precio { font-size: 1.5rem; font-weight: 700; color: #4caf50; }
+
+/* Carrito */
+.carrito-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+}
+
+.carrito-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #4caf50;
+}
+
+/* Checkout & Pago */
+.checkout-container {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+}
+
+.payment-section, .summary-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.card-selector {
+    margin-bottom: 1.5rem;
+}
+
+.option-group {
+    border: 2px solid #4caf50;
+    background: #e8f5e9;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.radio-label {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.card-icons {
+    display: flex;
+    gap: 5px;
+}
+
+.card-icons img {
+    height: 25px;
+    width: auto;
+    object-fit: contain;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon input {
+    width: 100%;
+    padding-right: 40px !important; /* Espacio para el icono */
+}
+
+.card-brand-icon, .cvv-icon, .tarjeta-icon {
+    position: absolute;
+    right: 12px;
+    height: 24px;
+    width: auto;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+/* Validación visual de inputs */
+.input-valid {
+    border-color: #4caf50 !important;
+    background-color: #f8fff8 !important;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.3) !important;
+}
+
+.input-error {
+    border-color: #f44336 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.3) !important;
+}
+
+.detection-feedback {
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 600;
+}
+.detection-feedback.valid { color: #4caf50; }
+.detection-feedback.error { color: #f44336; }
+
+/* Login y Auth */
+.login-container {
+    max-width: 400px;
+    margin: 2rem auto;
+}
+
+.login-required {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border: 1px solid #ffd43b;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-container .password-toggle {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+/* =============================
+   RESPONSIVE
+   ============================= */
+@media (max-width: 768px) {
+    main {
+        padding: 1rem;
+    }
+
+    header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    nav {
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5rem;
+    }
+
+    nav a {
+        display: block;
+        width: 100%;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .carrito-link { justify-content: center; }
+
+    .productos-grid, 
+    .checkout-container, 
+    .panel-dueno-container {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-section { order: -1; } /* Resumen primero en móvil */
+    
+    table { font-size: 0.9rem; }
+    th, td { padding: 0.75rem 0.5rem; }
+}
+.producto-imagen-container {
+    width: 100%;
+    height: 200px; /* Altura fija para que todas las tarjetas sean iguales */
+    overflow: hidden;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.producto-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Esto hace la magia: recorta la imagen para llenar el espacio sin estirarla */
+    transition: transform 0.3s ease;
+}
+
+.producto-img:hover {
+    transform: scale(1.1); /* Efecto de zoom al pasar el mouse */
+}
+
+/* Estilo para cuando no hay imagen (el cuadrado de color) */
+.placeholder-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: rgba(0,0,0,0.2);
+    background-color: #c8e6c9; /* Verde clarito */
+}

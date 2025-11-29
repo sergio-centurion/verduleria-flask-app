@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Pago Exitoso! - Verdulería Fres</title>
+    <!-- AGREGAR META TAG CSRF -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .success-icon {
+            font-size: 80px;
+            color: #4caf50;
+            margin-bottom: 10px;
+        }
+
+        .pedido-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #4caf50;
+            color: white;
+        }
+
+        .btn-success {
+            background: #2196f3;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .whatsnext {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 4px solid #4caf50;
+        }
+
+        .delivery-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✅</div>
+            <h1>¡Pago Exitoso!</h1>
+            <p>Gracias por tu compra en <strong>Verdulería Fres</strong></p>
+        </div>
+
+        <div class="pedido-details">
+            <h3>📦 Detalles de tu Pedido</h3>
+            <div class="detail-item">
+                <span><strong>Número de Pedido:</strong></span>
+                <span id="numero-pedido">VD-20251124-123456</span>
+            </div>
+            <div class="detail-item">
+                <span><strong>Fecha:</strong></span>
+                <span id="fecha-pedido">24 de Noviembre, 2025</span>
+            </div>
+            <div class="detail-item">
+                <span><strong>Total Pagado:</strong></span>
+                <span><strong id="total-pagado">$0.00</strong></span>
+            </div>
+            <div class="detail-item">
+                <span><strong>Estado:</strong></span>
+                <span style="color: #4caf50;">✅ Confirmado - En preparación</span>
+            </div>
+        </div>
+
+        <div class="delivery-info">
+            <h4>🚚 Información de Entrega</h4>
+            <p>• Tu pedido será entregado en las próximas 24-48 horas</p>
+            <p>• Recibirás una notificación cuando salga para entrega</p>
+            <p>• Horario de entrega: 8:00 AM - 8:00 PM</p>
+        </div>
+
+        <div class="whatsnext">
+            <h3>📋 ¿Qué sigue?</h3>
+            <p>• 📧 Recibirás un email de confirmación con todos los detalles</p>
+            <p>• 📦 Puedes seguir el estado de tu pedido en "Mis Compras"</p>
+            <p>• 📞 Contacto: soporte@verduleriafres.com | 11 1234-5678</p>
+        </div>
+
+        <div class="action-buttons">
+            <a href="#" class="btn btn-primary" id="btn-comprobante">
+                📄 Ver Comprobante
+            </a>
+            <a href="/mis_compras" class="btn btn-success">
+                📦 Mis Compras
+            </a>
+            <a href="/" class="btn btn-secondary">
+                🏠 Seguir Comprando
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Función para obtener el token CSRF
+        function getCSRFToken() {
+            const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+            return csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+        }
+
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedido = urlParams.get('pedido');
+        const total = urlParams.get('total');
+
+        // Actualizar información en la página
+        if (pedido) {
+            document.getElementById('numero-pedido').textContent = pedido;
+            
+            // Actualizar el enlace del comprobante
+            const comprobanteBtn = document.getElementById('btn-comprobante');
+            if (comprobanteBtn) {
+                comprobanteBtn.href = `/comprobante/${pedido}`;
+            }
+        }
+
+        if (total) {
+            document.getElementById('total-pagado').textContent = `$${parseFloat(total).toFixed(2)}`;
+        }
+
+        // Actualizar fecha actual
+        const fecha = new Date();
+        const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('fecha-pedido').textContent = fecha.toLocaleDateString('es-ES', opciones);
+
+        // Vaciar el carrito cuando se carga la página de pago exitoso
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página de pago exitoso cargada - limpiando carrito...');
+            
+            // Limpiar carrito de la sesión
+            fetch('/api/carrito/limpiar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error en la respuesta del servidor: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Carrito limpiado:', data);
+                // También limpiar sessionStorage por si acaso
+                sessionStorage.removeItem('carrito');
+                // Actualizar contador del carrito
+                const contador = document.getElementById('contador-carrito');
+                if (contador) {
+                    contador.style.display = 'none';
+                    contador.textContent = '0';
+                }
+            })
+            .catch(error => {
+                console.error('Error limpiando carrito:', error);
+                // Fallback: intentar limpiar localmente
+                sessionStorage.removeItem('carrito');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Mis Compras - Verdulería Fres{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Mis Compras</h2>
+    
+    {% if compras %}
+        {% for compra in compras %}
+        <div class="card">
+            <div class="card-header">
+                <h3>Pedido: {{ compra['venta']['numero_pedido'] }}</h3>
+                <span class="estado">{{ compra['venta']['estado'] }}</span>
+            </div>
+            <div class="card-body">
+                <p><strong>Fecha:</strong> {{ compra['venta']['fecha'] }}</p>
+                <p><strong>Total:</strong> ${{ "%.2f"|format(compra['venta']['total']) }}</p>
+                
+                <h4>Productos:</h4>
+                <ul>
+                    {% for item in compra['items'] %}
+                    <li>{{ item['nombre'] }} - {{ item['cantidad'] }} x ${{ "%.2f"|format(item['precio_unitario']) }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <p>No tienes compras realizadas.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Ir a Comprar</a>
+        </div>
+    {% endif %} 
+</div>
+{% endblock %}

@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Confirmar Compra - Verdulería Fres{% endblock %}
+
+{% block content %}
+<div class="confirmar-container">
+    <div class="confirmar-header">
+        <h2>✅ Confirmar Compra</h2>
+        <p>Revisá los detalles antes de proceder al pago</p>
+    </div>
+
+    <div class="confirmar-body">
+        <div class="seccion-confirmar">
+            <h4>🛒 Resumen de tu compra</h4>
+            <div class="tabla-productos">
+                <div class="fila-header">
+                    <span>Producto</span>
+                    <span>Cantidad</span>
+                    <span>Precio Unit.</span>
+                    <span>Subtotal</span>
+                </div>
+                {% for producto_id, item in carrito.items() %}
+                <div class="fila-producto">
+                    <span class="producto-nombre">{{ item.nombre }}</span>
+                    <span class="producto-cantidad">{{ item.cantidad }}</span>
+                    <span class="producto-precio">${{ "%.2f"|format(item.precio) }}</span>
+                    <span class="producto-subtotal">${{ "%.2f"|format(item.cantidad * item.precio) }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="seccion-confirmar totales">
+            <div class="total-general">
+                <span>Total a pagar:</span>
+                <span class="monto-total">${{ "%.2f"|format(total) }}</span>
+            </div>
+        </div>
+
+        <div class="seccion-confirmar">
+            <h4>💳 Método de Pago</h4>
+            <div class="metodo-pago-info">
+                <strong>{{ metodo_pago|upper }}</strong>
+                {% if metodo_pago == 'tarjeta' %}
+                <p>Se te redirigirá a la pasarela de pago segura</p>
+                {% else %}
+                <p>Podés abonar al momento de la entrega</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="confirmar-footer">
+        <div class="acciones-confirmar">
+            <!-- FORMULARIO PARA REDIRIGIR A PROCESAR_PAGO -->
+            <button type="button" class="btn btn-success btn-large" id="btn-pagar" onclick="procesarPago()">
+                💳 Proceder al Pago
+            </button>
+            
+            <a href="{{ url_for('finalizar_compra') }}" class="btn btn-secondary">
+                ✏️ Modificar compra
+            </a>
+            
+            <a href="{{ url_for('ver_carrito') }}" class="btn btn-outline">
+                🛒 Volver al carrito
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.confirmar-container {
+    max-width: 700px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.confirmar-header {
+    padding: 2rem;
+    background: linear-gradient(135deg, #4caf50, #43a047);
+    color: white;
+    text-align: center;
+}
+
+.confirmar-header h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+}
+
+.confirmar-header p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.confirmar-body {
+    padding: 2rem;
+}
+
+.seccion-confirmar {
+    margin-bottom: 2rem;
+}
+
+.seccion-confirmar h4 {
+    margin: 0 0 1rem 0;
+    color: #333;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #4caf50;
+    padding-bottom: 0.5rem;
+}
+
+.tabla-productos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.fila-header, .fila-producto {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    padding: 0.75rem;
+    align-items: center;
+}
+
+.fila-header {
+    background: #f8f9fa;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+.fila-producto {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.fila-producto:last-child {
+    border-bottom: none;
+}
+
+.producto-nombre {
+    font-weight: 500;
+}
+
+.totales {
+    border-top: 2px solid #4caf50;
+    padding-top: 1rem;
+}
+
+.total-general {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4caf50;
+}
+
+.monto-total {
+    font-size: 2rem;
+}
+
+.metodo-pago-info {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid #2196f3;
+}
+
+.confirmar-footer {
+    padding: 2rem;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.acciones-confirmar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    min-width: 200px;
+}
+
+.btn-success {
+    background: #4caf50;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.btn-success:hover {
+    background: #43a047;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .confirmar-container {
+        margin: 1rem;
+    }
+    
+    .confirmar-header {
+        padding: 1.5rem;
+    }
+    
+    .confirmar-body {
+        padding: 1.5rem;
+    }
+    
+    .fila-header, .fila-producto {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+        text-align: center;
+    }
+    
+    .acciones-confirmar {
+        align-items: stretch;
+    }
+}
+</style>
+
+<script>
+function procesarPago() {
+    const btnPagar = document.getElementById('btn-pagar');
+    
+    // Mostrar loading
+    btnPagar.disabled = true;
+    btnPagar.innerHTML = '🔄 Redirigiendo...';
+    
+    // Obtener datos necesarios
+    const total = "{{ total }}";
+    const metodoPago = "{{ metodo_pago }}";
+    
+    // Redirigir a la página de procesamiento
+    setTimeout(() => {
+        window.location.href = `/procesar_pago?total=${total}&metodo=${metodoPago}`;
+    }, 1000);
+}
+
+// También mantener el evento por si prefieres el formulario tradicional
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Página de confirmación cargada correctamente');
+});
+</script>
+{% endblock %}

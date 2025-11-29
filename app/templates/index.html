@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Verdulería Fres - Productos Frescos{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-content">
+        <h1>Verdulería Fres 🍎</h1>
+        <p class="hero-subtitle">Productos frescos directamente a tu mesa</p>
+        
+        {% if not current_user.is_authenticated %}
+        <div class="login-tip">
+            <strong>🚀 Compra rápida:</strong> ¡Puedes llenar el carrito sin registrarte!
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="filtros-container">
+    <button class="filtro-btn active" data-categoria="todas">Todas</button>
+    <button class="filtro-btn" data-categoria="verduras">Verduras</button>
+    <button class="filtro-btn" data-categoria="frutas">Frutas</button>
+</div>
+
+<div class="productos-grid">
+    {% for producto in productos %}
+    <div class="producto-card" data-categoria="{{ producto.categoria|lower }}">
+        
+        <div class="producto-imagen">
+            {% if producto.imagen_url %}
+                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="producto-img-real" loading="lazy">
+            {% else %}
+                <img src="https://image.pollinations.ai/prompt/{{ producto.nombre }}%20vegetable%20fruit%20white%20background%20hd?width=400&height=300&nologo=true" 
+                     alt="{{ producto.nombre }}" 
+                     class="producto-img-real" 
+                     loading="lazy"
+                     onerror="this.onerror=null; this.src='https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400';">
+            {% endif %}
+        </div>
+        
+        <div class="producto-info">
+            <h3 class="producto-nombre">{{ producto.nombre }}</h3>
+            <span class="producto-categoria">{{ producto.categoria or 'General' }}</span>
+            <p class="producto-descripcion">{{ producto.descripcion or 'Producto fresco de calidad' }}</p>
+            
+            <div class="producto-precio-stock">
+                <span class="precio">${{ "%.2f"|format(producto.precio) }}</span>
+                <span class="stock stock-{{ producto.id}} {{ 'stock-bajo' if producto.stock < 10 else 'stock-normal' }}">
+                    📦 {{ producto.stock }} un.
+                </span>
+            </div>
+            
+            {% if not current_user.is_authenticated or current_user.rol == 'cliente' %}
+                <button class="btn-agregar-carrito" 
+                        data-producto-id="{{ producto.id }}"
+                        data-producto-nombre="{{ producto.nombre }}"
+                        data-producto-precio="{{ producto.precio }}"
+                        {{ 'disabled' if producto.stock == 0 }}>
+                    🛒 {{ 'Agregar' if producto.stock > 0 else 'Sin Stock' }}
+                </button>
+            {% else %}
+                <div style="text-align: center; color: #888; font-size: 0.9em;">
+                    Vista de {{ current_user.rol }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="no-productos">
+        <p>No hay productos disponibles en este momento.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+/* Estilos Hero */
+.hero-section {
+    background: linear-gradient(135deg, #4caf50, #2e7d32);
+    color: white;
+    padding: 3rem 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+}
+
+.hero-content h1 { font-size: 2.5rem; margin-bottom: 0.5rem; text-shadow: 1px 1px 4px rgba(0,0,0,0.2); }
+.hero-subtitle { font-size: 1.2rem; opacity: 0.9; margin-bottom: 1rem; }
+
+.login-tip {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+    backdrop-filter: blur(5px);
+    font-size: 0.9rem;
+}
+
+/* Filtros */
+.filtros-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filtro-btn {
+    padding: 0.5rem 1.5rem;
+    border: 2px solid #4caf50;
+    background: white;
+    color: #4caf50;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.filtro-btn.active, .filtro-btn:hover {
+    background: #4caf50;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Grid Productos */
+.productos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+    padding: 0 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.producto-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.producto-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ESTILOS DE IMAGEN REAL */
+.producto-imagen {
+    height: 200px;
+    width: 100%;
+    background-color: #f5f5f5;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.producto-img-real {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* CLAVE: Recorta la imagen para llenar el espacio sin deformar */
+    transition: transform 0.5s ease;
+}
+
+.producto-card:hover .producto-img-real {
+    transform: scale(1.1); /* Zoom suave al pasar el mouse */
+}
+
+/* Placeholder antiguo (por si falla la foto) */
+.img-placeholder {
+    font-size: 4rem;
+    font-weight: 900;
+    color: rgba(76, 175, 80, 0.2);
+    text-transform: uppercase;
+}
+
+.producto-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.producto-nombre {
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+}
+
+.producto-categoria {
+    align-self: flex-start;
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 0.2rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.producto-descripcion {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: auto; /* Empuja el precio hacia abajo */
+    padding-bottom: 1rem;
+}
+
+.producto-precio-stock {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.precio {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #2e7d32;
+}
+
+.stock {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.stock-bajo { color: #f57c00; font-weight: bold; }
+
+/* Botón comprar */
+.btn-agregar-carrito {
+    width: 100%;
+    padding: 0.8rem;
+    background: #2e7d32;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-agregar-carrito:not(:disabled):hover {
+    background: #1b5e20;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(46, 125, 50, 0.4);
+}
+
+.btn-agregar-carrito:disabled {
+    background: #e0e0e0;
+    color: #9e9e9e;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .productos-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+    .hero-content h1 { font-size: 2rem; }
+}
+</style>
+
+<script>
+// Filtrado visual simple
+document.addEventListener('DOMContentLoaded', function() {
+    const filtroBtns = document.querySelectorAll('.filtro-btn');
+    const productoCards = document.querySelectorAll('.producto-card');
+    
+    filtroBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filtroBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const categoria = this.dataset.categoria;
+            productoCards.forEach(card => {
+                if (categoria === 'todas' || card.dataset.categoria === categoria) {
+                    card.style.display = 'flex'; // Usar flex para mantener layout
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+</script>
+{% endblock %}
